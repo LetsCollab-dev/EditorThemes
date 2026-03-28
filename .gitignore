@@ -89,3 +89,4 @@ fabric.properties
 *.suo
 *.userosscache
 *.sln.docstates
+.vscode/settings.json

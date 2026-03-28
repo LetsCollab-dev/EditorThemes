@@ -3,7 +3,7 @@
   "displayName": "LetsCollab Theme",
   "description": "LetsCollab Dark theme for Visual Studio Code, matched to the Rider theme palette.",
   "version": "0.0.1",
-  "publisher": "Savi Studios",
+  "publisher": "savistudios",
   "license": "SEE LICENSE IN ../LICENSE",
   "engines": {
     "vscode": "^1.85.0"
