@@ -171,7 +171,7 @@
         </option>
         <option name="CUSTOM_KEYWORD2_ATTRIBUTES">
             <value>
-                <option name="FOREGROUND" value="053d4d" />
+                <option name="FOREGROUND" value="086984" />
             </value>
         </option>
         <option name="CUSTOM_KEYWORD3_ATTRIBUTES">
@@ -226,7 +226,7 @@
         </option>
         <option name="DEFAULT_CONSTANT">
             <value>
-                <option name="FOREGROUND" value="053d4d" />
+                <option name="FOREGROUND" value="086984" />
                 <option name="FONT_TYPE" value="2" />
             </value>
         </option>
@@ -276,12 +276,12 @@
         </option>
         <option name="DEFAULT_INSTANCE_FIELD">
             <value>
-                <option name="FOREGROUND" value="053d4d" />
+                <option name="FOREGROUND" value="086984" />
             </value>
         </option>
         <option name="DEFAULT_INSTANCE_METHOD">
             <value>
-                <option name="FOREGROUND" value="57aaf7" />
+                <option name="FOREGROUND" value="35A348" />
             </value>
         </option>
         <option name="DEFAULT_INVALID_STRING_ESCAPE">
@@ -342,13 +342,13 @@
         </option>
         <option name="DEFAULT_STATIC_FIELD">
             <value>
-                <option name="FOREGROUND" value="053d4d" />
+                <option name="FOREGROUND" value="086984" />
                 <option name="FONT_TYPE" value="2" />
             </value>
         </option>
         <option name="DEFAULT_STATIC_METHOD">
             <value>
-                <option name="FOREGROUND" value="57aaf7" />
+                <option name="FOREGROUND" value="35A348" />
                 <option name="FONT_TYPE" value="2" />
             </value>
         </option>
@@ -464,7 +464,7 @@
         </option>
         <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
             <value>
-                <option name="FOREGROUND" value="053d4d" />
+                <option name="FOREGROUND" value="086984" />
                 <option name="EFFECT_COLOR" value="9e6294" />
                 <option name="EFFECT_TYPE" value="1" />
             </value>
