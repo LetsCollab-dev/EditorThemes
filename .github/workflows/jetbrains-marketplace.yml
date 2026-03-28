@@ -19,12 +19,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Package plugin
-        working-directory: resources
+      - name: Package Rider plugin
         run: |
           set -euo pipefail
-          mkdir -p "$GITHUB_WORKSPACE/dist"
-          zip -r "$GITHUB_WORKSPACE/dist/LetsCollabThemes.zip" .
+          chmod +x ./scripts/build-rider-plugin.sh
+          ./scripts/build-rider-plugin.sh
 
       - name: Upload to JetBrains Marketplace
         run: |
@@ -33,8 +32,13 @@ jobs:
             echo "JETBRAINS_MARKETPLACE_TOKEN is not set"
             exit 1
           fi
+          JAR_FILE="$(ls -1 dist/rider/*.jar | head -n 1)"
+          if [ -z "${JAR_FILE}" ]; then
+            echo "No JAR found in dist/rider/"
+            exit 1
+          fi
           curl -f -X POST \
             -H "Authorization: Bearer ${MARKETPLACE_TOKEN}" \
             -F "pluginId=${PLUGIN_ID}" \
-            -F "file=@dist/LetsCollabThemes.zip" \
+            -F "file=@${JAR_FILE}" \
             https://plugins.jetbrains.com/plugin/uploadPlugin

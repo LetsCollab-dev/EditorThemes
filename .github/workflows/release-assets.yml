@@ -1,0 +1,57 @@
+name: Build Release Assets
+
+on:
+  push:
+    tags:
+      - "rider-v*"
+      - "vs-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rider:
+    name: Build Rider JAR
+    if: startsWith(github.ref, 'refs/tags/rider-v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Rider plugin JAR
+        run: |
+          chmod +x ./scripts/build-rider-plugin.sh
+          ./scripts/build-rider-plugin.sh
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+      - name: Upload Rider JAR to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/rider/*.jar
+
+  visual-studio:
+    name: Build Visual Studio VSIX
+    if: startsWith(github.ref, 'refs/tags/vs-v')
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Visual Studio VSIX
+        shell: pwsh
+        run: ./scripts/build-visualstudio-vsix.ps1
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+      - name: Upload VSIX to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/visualstudio/*.vsix
