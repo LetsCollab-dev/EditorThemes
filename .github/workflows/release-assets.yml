@@ -74,4 +74,4 @@ jobs:
       - name: Upload VSIX to release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/visualstudio/*.vsix
+          files: VisualStudio/bin/Release/*.vsix
