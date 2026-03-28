@@ -5,6 +5,7 @@ This extension provides a VS Code theme aligned to the Rider `LetsCollab Dark` p
 ## Palette Source
 
 Primary colors are matched from the Rider theme:
+
 - Background: `#090909`
 - Foreground: `#d0d0d9`
 - Accent: `#35A348`
@@ -24,7 +25,7 @@ npx @vscode/vsce package
 This generates a `.vsix` file that can be installed with:
 
 ```bash
-code --install-extension letscollab-vscode-theme-0.0.1.vsix
+code --install-extension letscollab-vscode-theme-<version>.vsix
 ```
 
 Then choose **LetsCollab Dark** from the Color Theme picker.

@@ -18,10 +18,14 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 
 const palettePath = path.join(rootDir, "theme", "palette.json");
+const versionPath = path.join(rootDir, "version.json");
 const riderThemePath = path.join(rootDir, "Rider", "resources", "theme", "LetsCollabThemes.theme.json");
 const riderEditorSchemePath = path.join(rootDir, "Rider", "resources", "letscollabDark.theme.xml");
+const riderPluginXmlPath = path.join(rootDir, "Rider", "resources", "META-INF", "plugin.xml");
+const vscodePackageJsonPath = path.join(rootDir, "VSCode", "package.json");
 const vscodeThemePath = path.join(rootDir, "VSCode", "themes", "letscollab-dark-color-theme.json");
 const visualStudioThemePath = path.join(rootDir, "VisualStudio", "CustomTheme.vstheme");
+const visualStudioManifestPath = path.join(rootDir, "VisualStudio", "source.extension.vsixmanifest");
 
 function writeOrCheckFile(filePath, nextContent, checkOnly, outOfSyncFiles) {
   const currentContent = fs.readFileSync(filePath, "utf8");
@@ -54,6 +58,49 @@ function normalizeHex(value) {
     throw new Error(`Invalid hex value: ${value}`);
   }
   return hex;
+}
+
+function normalizeSharedVersion(value) {
+  if (typeof value !== "string") {
+    throw new Error(`Expected version string but got ${typeof value}`);
+  }
+
+  const version = value.trim();
+  if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)) {
+    throw new Error(`Invalid version value: ${value}`);
+  }
+
+  return version;
+}
+
+function readSharedVersion() {
+  const config = readJson(versionPath);
+
+  if (!config || typeof config !== "object" || Array.isArray(config)) {
+    throw new Error("version.json must be a JSON object with a string 'version' field");
+  }
+
+  if (!("version" in config)) {
+    throw new Error("version.json is missing required key: version");
+  }
+
+  return normalizeSharedVersion(config.version);
+}
+
+function setXmlTagValue(source, tagName, nextValue) {
+  const pattern = new RegExp(`(<${tagName}>)([^<]*)(<\\/${tagName}>)`, "i");
+  if (!pattern.test(source)) {
+    throw new Error(`Missing <${tagName}> tag while syncing shared version`);
+  }
+  return source.replace(pattern, `$1${nextValue}$3`);
+}
+
+function setVsixIdentityVersion(source, nextVersion) {
+  const pattern = /(<Identity\b[^>]*\bVersion=")([^"]+)(")/i;
+  if (!pattern.test(source)) {
+    throw new Error("Missing <Identity ... Version=\"...\"> in VisualStudio/source.extension.vsixmanifest");
+  }
+  return source.replace(pattern, `$1${nextVersion}$3`);
 }
 
 function toVsArgb(hex) {
@@ -160,6 +207,20 @@ function validatePalette(palette) {
   }
 }
 
+function syncSharedVersion(sharedThemeVersion, checkOnly, outOfSyncFiles) {
+  const vscodePackage = readJson(vscodePackageJsonPath);
+  vscodePackage.version = sharedThemeVersion;
+  writeOrCheckFile(vscodePackageJsonPath, `${JSON.stringify(vscodePackage, null, 2)}\n`, checkOnly, outOfSyncFiles);
+
+  const riderPluginXml = fs.readFileSync(riderPluginXmlPath, "utf8");
+  const updatedRiderPluginXml = setXmlTagValue(riderPluginXml, "version", sharedThemeVersion);
+  writeOrCheckFile(riderPluginXmlPath, updatedRiderPluginXml, checkOnly, outOfSyncFiles);
+
+  const visualStudioManifest = fs.readFileSync(visualStudioManifestPath, "utf8");
+  const updatedVisualStudioManifest = setVsixIdentityVersion(visualStudioManifest, sharedThemeVersion);
+  writeOrCheckFile(visualStudioManifestPath, updatedVisualStudioManifest, checkOnly, outOfSyncFiles);
+}
+
 function syncRiderTheme(palette, checkOnly, outOfSyncFiles) {
   const riderTheme = readJson(riderThemePath);
   riderTheme.colors = Object.fromEntries(
@@ -256,11 +317,13 @@ function syncVisualStudioTheme(palette, checkOnly, outOfSyncFiles) {
 
 function main() {
   const checkOnly = process.argv.includes("--check");
+  const sharedThemeVersion = readSharedVersion();
   const palette = readJson(palettePath);
   const outOfSyncFiles = [];
 
   validatePalette(palette);
 
+  syncSharedVersion(sharedThemeVersion, checkOnly, outOfSyncFiles);
   syncRiderTheme(palette, checkOnly, outOfSyncFiles);
   syncRiderEditorScheme(palette, checkOnly, outOfSyncFiles);
   syncVscodeTheme(palette, checkOnly, outOfSyncFiles);
@@ -268,7 +331,7 @@ function main() {
 
   if (checkOnly) {
     if (outOfSyncFiles.length > 0) {
-      console.error("Generated theme files are out of sync with theme/palette.json:");
+      console.error("Theme targets are out of sync with shared sync config:");
       for (const file of outOfSyncFiles) {
         console.error(`- ${file}`);
       }
@@ -276,11 +339,11 @@ function main() {
       process.exit(1);
     }
 
-    console.log("Generated theme files are in sync with theme/palette.json.");
+    console.log("Theme targets are in sync with shared sync config.");
     return;
   }
 
-  console.log("Synced Rider, Visual Studio, and VS Code themes from theme/palette.json");
+  console.log(`Synced Rider, Visual Studio, and VS Code themes + versions to ${sharedThemeVersion}`);
 }
 
 main();

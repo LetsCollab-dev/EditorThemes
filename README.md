@@ -10,6 +10,7 @@ This repository holds three editor theme projects:
 
 All three theme targets are synchronized from [theme/palette.json](theme/palette.json).
 The shared palette now includes both UI keys (backgrounds, borders, accents) and semantic syntax keys (for example `syntaxKeyword`, `syntaxClass`, `syntaxParameter`, `syntaxComment`).
+Shared extension version is synchronized from `version.json`.
 
 Run this from the repository root whenever you update colors:
 
@@ -33,8 +34,11 @@ This script updates:
 
 - Rider: `Rider/resources/theme/LetsCollabThemes.theme.json`
 - Rider editor syntax scheme: `Rider/resources/letscollabDark.theme.xml`
+- Rider plugin version: `Rider/resources/META-INF/plugin.xml`
 - Visual Studio Code: `VSCode/themes/letscollab-dark-color-theme.json`
+- Visual Studio Code extension version: `VSCode/package.json`
 - Visual Studio: `VisualStudio/CustomTheme.vstheme` (core palette, legacy substitutions, and semantic classifications)
+- Visual Studio extension version: `VisualStudio/source.extension.vsixmanifest`
 
 Detailed cross-app mapping: [theme/COLOR_CORRELATIONS.md](theme/COLOR_CORRELATIONS.md)
 
