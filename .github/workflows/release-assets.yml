@@ -5,6 +5,7 @@ on:
     tags:
       - "rider-v*"
       - "vs-v*"
+      - "vscode-v*"
   workflow_dispatch:
 
 permissions:
@@ -75,3 +76,34 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: VisualStudio/bin/Release/*.vsix
+
+  vscode:
+    name: Build VS Code Theme VSIX
+    if: startsWith(github.ref, 'refs/tags/vscode-v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: VSCode
+        run: npm install
+
+      - name: Package VS Code theme
+        working-directory: VSCode
+        run: npx @vscode/vsce package
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+      - name: Upload VS Code VSIX to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: VSCode/*.vsix
