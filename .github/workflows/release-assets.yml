@@ -42,9 +42,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Visual Studio VSIX
+      - name: Install Visual Studio Build Tools (VSSDK)
         shell: pwsh
-        run: ./scripts/build-visualstudio-vsix.ps1
+        run: |
+          choco install visualstudio2022buildtools --no-progress --yes --package-parameters "--add Microsoft.VisualStudio.Workload.VSSDK"
+
+      - name: Build Visual Studio VSIX
+        shell: bash
+        run: |
+          chmod +x ./scripts/build-visualstudio-vsix.sh
+          ./scripts/build-visualstudio-vsix.sh
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
