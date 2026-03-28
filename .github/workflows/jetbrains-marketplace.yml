@@ -1,0 +1,40 @@
+name: Publish JetBrains Plugin
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      PLUGIN_ID: "26530"
+      MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package plugin
+        working-directory: resources
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          zip -r "$GITHUB_WORKSPACE/dist/LetsCollabThemes.zip" .
+
+      - name: Upload to JetBrains Marketplace
+        run: |
+          set -euo pipefail
+          if [ -z "${MARKETPLACE_TOKEN}" ]; then
+            echo "JETBRAINS_MARKETPLACE_TOKEN is not set"
+            exit 1
+          fi
+          curl -f -X POST \
+            -H "Authorization: Bearer ${MARKETPLACE_TOKEN}" \
+            -F "pluginId=${PLUGIN_ID}" \
+            -F "file=@dist/LetsCollabThemes.zip" \
+            https://plugins.jetbrains.com/plugin/uploadPlugin
