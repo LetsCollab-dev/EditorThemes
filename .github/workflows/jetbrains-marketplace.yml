@@ -3,7 +3,7 @@ name: Publish JetBrains Plugin
 on:
   push:
     tags:
-      - "v*"
+      - "rider-v*"
   workflow_dispatch:
 
 permissions:
@@ -18,6 +18,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify generated themes are in sync
+        run: node ./scripts/sync-theme-palette.mjs --check
+
+      - name: Verify semantic mapping coverage
+        run: node ./scripts/verify-theme-sync-coverage.mjs
 
       - name: Package Rider plugin
         run: |

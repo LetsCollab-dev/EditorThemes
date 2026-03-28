@@ -20,6 +20,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify generated themes are in sync
+        run: node ./scripts/sync-theme-palette.mjs --check
+
+      - name: Verify semantic mapping coverage
+        run: node ./scripts/verify-theme-sync-coverage.mjs
+
       - name: Build Rider plugin JAR
         run: |
           chmod +x ./scripts/build-rider-plugin.sh
@@ -42,6 +53,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify generated themes are in sync
+        run: node .\scripts\sync-theme-palette.mjs --check
+
+      - name: Verify semantic mapping coverage
+        run: node .\scripts\verify-theme-sync-coverage.mjs
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -89,6 +111,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Verify generated themes are in sync
+        run: node ./scripts/sync-theme-palette.mjs --check
+
+      - name: Verify semantic mapping coverage
+        run: node ./scripts/verify-theme-sync-coverage.mjs
 
       - name: Install dependencies
         working-directory: VSCode

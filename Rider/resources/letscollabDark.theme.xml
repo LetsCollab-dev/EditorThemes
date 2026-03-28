@@ -171,17 +171,17 @@
         </option>
         <option name="CUSTOM_KEYWORD2_ATTRIBUTES">
             <value>
-                <option name="FOREGROUND" value="086984" />
+                <option name="FOREGROUND" value="bcbec4" />
             </value>
         </option>
         <option name="CUSTOM_KEYWORD3_ATTRIBUTES">
             <value>
-                <option name="FOREGROUND" value="da19e" />
+                <option name="FOREGROUND" value="b3ae60" />
             </value>
         </option>
         <option name="CUSTOM_KEYWORD4_ATTRIBUTES">
             <value>
-                <option name="FOREGROUND" value="b3ae60" />
+                <option name="FOREGROUND" value="bcbec4" />
                 <option name="EFFECT_TYPE" value="1" />
             </value>
         </option>
@@ -244,12 +244,12 @@
         </option>
         <option name="DEFAULT_DOC_COMMENT_TAG_VALUE">
             <value>
-                <option name="FOREGROUND" value="abadb3" />
+                <option name="FOREGROUND" value="67a37c" />
             </value>
         </option>
         <option name="DEFAULT_DOC_MARKUP">
             <value>
-                <option name="FOREGROUND" value="68a67e" />
+                <option name="FOREGROUND" value="67a37c" />
             </value>
         </option>
         <option name="DEFAULT_DOT">
@@ -281,12 +281,12 @@
         </option>
         <option name="DEFAULT_INSTANCE_METHOD">
             <value>
-                <option name="FOREGROUND" value="35A348" />
+                <option name="FOREGROUND" value="35a348" />
             </value>
         </option>
         <option name="DEFAULT_INVALID_STRING_ESCAPE">
             <value>
-                <option name="FOREGROUND" value="cf8e6d" />
+                <option name="FOREGROUND" value="f75464" />
                 <option name="EFFECT_COLOR" value="fa6675" />
                 <option name="EFFECT_TYPE" value="2" />
             </value>
@@ -348,7 +348,7 @@
         </option>
         <option name="DEFAULT_STATIC_METHOD">
             <value>
-                <option name="FOREGROUND" value="35A348" />
+                <option name="FOREGROUND" value="35a348" />
                 <option name="FONT_TYPE" value="2" />
             </value>
         </option>
@@ -464,7 +464,7 @@
         </option>
         <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
             <value>
-                <option name="FOREGROUND" value="086984" />
+                <option name="FOREGROUND" value="bcbec4" />
                 <option name="EFFECT_COLOR" value="9e6294" />
                 <option name="EFFECT_TYPE" value="1" />
             </value>
@@ -518,13 +518,13 @@
         <option name="JS.GLOBAL_FUNCTION" baseAttributes="DEFAULT_FUNCTION_DECLARATION" />
         <option name="JS.GLOBAL_VARIABLE">
             <value>
-                <option name="FOREGROUND" value="c77dba" />
+                <option name="FOREGROUND" value="bcbec4" />
                 <option name="FONT_TYPE" value="2" />
             </value>
         </option>
         <option name="JS.INSTANCE_MEMBER_FUNCTION">
             <value>
-                <option name="FOREGROUND" value="56a8f5" />
+                <option name="FOREGROUND" value="35a348" />
             </value>
         </option>
         <option name="JS.JSX_CLIENT_COMPONENT">
@@ -556,7 +556,7 @@
         </option>
         <option name="KOTLIN_NAMED_ARGUMENT">
             <value>
-                <option name="FOREGROUND" value="56c1d6" />
+                <option name="FOREGROUND" value="bcbec4" />
             </value>
         </option>
         <option name="KOTLIN_SMART_CAST_RECEIVER">
@@ -713,19 +713,19 @@
         </option>
         <option name="Static method access">
             <value>
-                <option name="FOREGROUND" value="c77dba" />
+                <option name="FOREGROUND" value="35a348" />
                 <option name="FONT_TYPE" value="2" />
             </value>
         </option>
         <option name="Static property reference ID">
             <value>
-                <option name="FOREGROUND" value="c77dba" />
+                <option name="FOREGROUND" value="086984" />
                 <option name="FONT_TYPE" value="2" />
             </value>
         </option>
         <option name="TEMPLATE_VARIABLE_ATTRIBUTES">
             <value>
-                <option name="FOREGROUND" value="b189f5" />
+                <option name="FOREGROUND" value="bcbec4" />
             </value>
         </option>
         <option name="TEXT">

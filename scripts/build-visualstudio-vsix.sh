@@ -5,6 +5,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${ROOT_DIR}/dist/visualstudio"
 SOLUTION_FILE="${ROOT_DIR}/VisualStudio/LetsCollabTheme.sln"
 
+if command -v node >/dev/null 2>&1; then
+  node "${ROOT_DIR}/scripts/sync-theme-palette.mjs"
+else
+  echo "Skipping palette sync: node is not installed." >&2
+fi
+
 if [ ! -f "${SOLUTION_FILE}" ]; then
   echo "Missing solution file: ${SOLUTION_FILE}" >&2
   exit 1

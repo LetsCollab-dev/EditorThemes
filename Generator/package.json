@@ -1,0 +1,13 @@
+{
+  "name": "letscollab-theme-generator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GUI palette editor for LetsCollab shared theme colors",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

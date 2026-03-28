@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LetsCollab Palette Generator</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>LetsCollab Palette Generator</h1>
+      <p>Edit shared colors, save to theme/palette.json, and sync Rider, Visual Studio, and VS Code themes.</p>
+    </header>
+
+    <main>
+      <form id="palette-form">
+        <section class="toolbar">
+          <button type="button" id="reload">Reload</button>
+          <button type="button" id="reset">Reset to Last Loaded</button>
+          <button type="submit" class="primary">Save and Sync</button>
+        </section>
+
+        <section id="grid" class="grid" aria-live="polite"></section>
+      </form>
+
+      <section class="preview">
+        <h2>Quick Preview</h2>
+        <div id="preview-card" class="preview-card">
+          <h3>Sample Title</h3>
+          <p>This preview uses key palette values for fast visual feedback while editing.</p>
+          <button type="button">Action</button>
+        </div>
+      </section>
+
+      <pre id="status" class="status">Loading palette...</pre>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -5,6 +5,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${ROOT_DIR}/dist/rider"
 PLUGIN_XML="${ROOT_DIR}/Rider/resources/META-INF/plugin.xml"
 
+if command -v node >/dev/null 2>&1; then
+  node "${ROOT_DIR}/scripts/sync-theme-palette.mjs"
+else
+  echo "Skipping palette sync: node is not installed." >&2
+fi
+
 if [ ! -f "${PLUGIN_XML}" ]; then
   echo "Missing plugin XML: ${PLUGIN_XML}" >&2
   exit 1

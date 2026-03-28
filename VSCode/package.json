@@ -26,7 +26,9 @@
     ]
   },
   "scripts": {
-    "package": "vsce package"
+    "sync-theme": "node ../scripts/sync-theme-palette.mjs",
+    "verify-theme-coverage": "node ../scripts/verify-theme-sync-coverage.mjs",
+    "package": "npm run sync-theme && npm run verify-theme-coverage && vsce package"
   },
   "devDependencies": {
     "@vscode/vsce": "^2.29.0"
