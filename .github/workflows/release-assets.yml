@@ -98,6 +98,10 @@ jobs:
         working-directory: VSCode
         run: npm install
 
+      - name: Remove existing VSIX artifacts
+        working-directory: VSCode
+        run: rm -f ./*.vsix
+
       - name: Package VS Code theme
         working-directory: VSCode
         run: npx @vscode/vsce package
@@ -118,6 +122,13 @@ jobs:
       - build-visual-studio
       - build-vscode
     steps:
+      - name: Ensure release trigger token is configured
+        if: ${{ secrets.RELEASE_TRIGGER_TOKEN == '' }}
+        run: |
+          echo "Missing RELEASE_TRIGGER_TOKEN secret."
+          echo "Add a GitHub PAT as RELEASE_TRIGGER_TOKEN so release 'published' events can trigger downstream workflows."
+          exit 1
+
       - name: Download Rider artifact
         uses: actions/download-artifact@v4
         with:
@@ -136,9 +147,38 @@ jobs:
           name: vscode-vsix
           path: dist/release-assets/vscode
 
+      - name: Remove stale managed assets from existing release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG_NAME="${GITHUB_REF_NAME}"
+
+          if ! gh release view "${TAG_NAME}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "No existing release for ${TAG_NAME}; no cleanup required."
+            exit 0
+          fi
+
+          ASSETS="$(gh release view "${TAG_NAME}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name')"
+
+          if [ -z "${ASSETS}" ]; then
+            echo "Existing release has no assets; no cleanup required."
+            exit 0
+          fi
+
+          while IFS= read -r asset; do
+            [ -z "${asset}" ] && continue
+            if echo "${asset}" | grep -Eiq '\.(jar|vsix)$'; then
+              echo "Deleting stale asset ${asset}"
+              gh release delete-asset "${TAG_NAME}" "${asset}" --repo "${{ github.repository }}" --yes
+            fi
+          done <<< "${ASSETS}"
+
       - name: Create draft release and upload all assets
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
           draft: true
           generate_release_notes: true
           files: |
@@ -149,7 +189,7 @@ jobs:
       - name: Verify expected release assets exist
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
         run: |
           set -euo pipefail
           TAG_NAME="${GITHUB_REF_NAME}"
@@ -163,25 +203,29 @@ jobs:
           echo "Release assets for ${TAG_NAME}:"
           echo "${ASSET_NAMES}"
 
-          echo "${ASSET_NAMES}" | grep -Ei '\.jar$' >/dev/null || {
-            echo "Missing Rider JAR asset on release ${TAG_NAME}."
-            exit 1
-          }
+          RIDER_COUNT="$(echo "${ASSET_NAMES}" | grep -Eic '\.jar$' || true)"
+          VSCODE_COUNT="$(echo "${ASSET_NAMES}" | grep -Eic 'vscode-theme.*\.vsix$' || true)"
+          VS_COUNT="$(echo "${ASSET_NAMES}" | grep -Ei '\.vsix$' | grep -Eiv 'vscode-theme' | wc -l | tr -d ' ')"
 
-          echo "${ASSET_NAMES}" | grep -Ei 'vscode-theme.*\.vsix$' >/dev/null || {
-            echo "Missing VS Code VSIX asset on release ${TAG_NAME}."
+          if [ "${RIDER_COUNT}" -ne 1 ]; then
+            echo "Expected exactly 1 Rider JAR asset on release ${TAG_NAME}; found ${RIDER_COUNT}."
             exit 1
-          }
+          fi
 
-          echo "${ASSET_NAMES}" | grep -Ei '\.vsix$' | grep -Eiv 'vscode-theme' >/dev/null || {
-            echo "Missing Visual Studio VSIX asset on release ${TAG_NAME}."
+          if [ "${VSCODE_COUNT}" -ne 1 ]; then
+            echo "Expected exactly 1 VS Code VSIX asset on release ${TAG_NAME}; found ${VSCODE_COUNT}."
             exit 1
-          }
+          fi
+
+          if [ "${VS_COUNT}" -ne 1 ]; then
+            echo "Expected exactly 1 Visual Studio VSIX asset on release ${TAG_NAME}; found ${VS_COUNT}."
+            exit 1
+          fi
 
       - name: Publish release
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
         run: |
           set -euo pipefail
           gh release edit "${GITHUB_REF_NAME}" --repo "${{ github.repository }}" --draft=false
