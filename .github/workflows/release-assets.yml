@@ -122,13 +122,6 @@ jobs:
       - build-visual-studio
       - build-vscode
     steps:
-      - name: Ensure release trigger token is configured
-        if: ${{ secrets.RELEASE_TRIGGER_TOKEN == '' }}
-        run: |
-          echo "Missing RELEASE_TRIGGER_TOKEN secret."
-          echo "Add a GitHub PAT as RELEASE_TRIGGER_TOKEN so release 'published' events can trigger downstream workflows."
-          exit 1
-
       - name: Download Rider artifact
         uses: actions/download-artifact@v4
         with:
@@ -150,7 +143,7 @@ jobs:
       - name: Remove stale managed assets from existing release
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TAG_NAME="${GITHUB_REF_NAME}"
@@ -178,7 +171,7 @@ jobs:
       - name: Create draft release and upload all assets
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           generate_release_notes: true
           files: |
@@ -189,7 +182,7 @@ jobs:
       - name: Verify expected release assets exist
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TAG_NAME="${GITHUB_REF_NAME}"
@@ -225,7 +218,120 @@ jobs:
       - name: Publish release
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TRIGGER_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           gh release edit "${GITHUB_REF_NAME}" --repo "${{ github.repository }}" --draft=false
+
+  publish-vscode-marketplace:
+    name: Publish VS Code Extension
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs:
+      - build-vscode
+      - publish-release
+    steps:
+      - name: Download VS Code artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vscode-vsix
+          path: dist/release-assets/vscode
+
+      - name: Locate VS Code VSIX
+        id: vscode-vsix
+        shell: bash
+        run: |
+          set -euo pipefail
+          VSIX_FILE="$(find dist/release-assets/vscode -maxdepth 1 -type f -name '*.vsix' | head -n 1 || true)"
+          if [ -z "${VSIX_FILE}" ]; then
+            echo "Unable to locate VS Code VSIX in build artifacts."
+            exit 1
+          fi
+          echo "path=${VSIX_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ steps.vscode-vsix.outputs.path }}
+          skipDuplicate: true
+
+  publish-visualstudio-marketplace:
+    name: Publish Visual Studio Extension
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-2025-vs2026
+    needs:
+      - build-visual-studio
+      - publish-release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Visual Studio artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: visualstudio-vsix
+          path: dist/release-assets/visualstudio
+
+      - name: Locate VSIX artifact
+        id: vsix
+        shell: pwsh
+        run: |
+          $artifact = Get-ChildItem -Path .\dist\release-assets\visualstudio\*.vsix |
+            Select-Object -First 1
+
+          if (-not $artifact) {
+            throw "No Visual Studio VSIX found in build artifacts"
+          }
+
+          "path=$($artifact.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Publish to Visual Studio Marketplace
+        uses: cezarypiatek/VsixPublisherAction@1.1
+        with:
+          extension-file: ${{ steps.vsix.outputs.path }}
+          publish-manifest-file: VisualStudio/publishManifest.json
+          personal-access-code: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+
+  publish-jetbrains-marketplace:
+    name: Publish JetBrains Plugin
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs:
+      - build-rider
+      - publish-release
+    env:
+      PLUGIN_ID: "26530"
+      MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+    steps:
+      - name: Download Rider artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rider-jar
+          path: dist/release-assets/rider
+
+      - name: Locate Rider JAR artifact
+        id: rider-jar
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR_FILE="$(find dist/release-assets/rider -maxdepth 1 -type f -name '*.jar' | head -n 1 || true)"
+          if [ -z "${JAR_FILE}" ]; then
+            echo "No Rider JAR found in build artifacts."
+            exit 1
+          fi
+          echo "path=${JAR_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to JetBrains Marketplace
+        run: |
+          set -euo pipefail
+          if [ -z "${MARKETPLACE_TOKEN}" ]; then
+            echo "JETBRAINS_MARKETPLACE_TOKEN is not set"
+            exit 1
+          fi
+          curl -f -X POST \
+            -H "Authorization: Bearer ${MARKETPLACE_TOKEN}" \
+            -F "pluginId=${PLUGIN_ID}" \
+            -F "file=@${{ steps.rider-jar.outputs.path }}" \
+            https://plugins.jetbrains.com/plugin/uploadPlugin
