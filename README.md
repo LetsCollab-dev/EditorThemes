@@ -114,3 +114,25 @@ npm run package
 ```
 
 This runs the shared palette sync first, then packages the extension VSIX.
+
+## Marketplace publishing (GitHub Actions)
+
+Three dedicated workflows publish extensions to marketplaces from the GitHub release assets:
+
+- VS Code extension: `.github/workflows/vscode-marketplace.yml` (trigger: release `published` for `v*` tags)
+- Visual Studio extension: `.github/workflows/visualstudio-marketplace.yml` (trigger: release `published` for `v*` tags)
+- JetBrains plugin: `.github/workflows/jetbrains-marketplace.yml` (trigger: release `published` for `v*` tags)
+
+All workflows download and publish the already attached release assets (`.vsix`/`.jar`), so they do not rebuild artifacts.
+The release asset workflow creates the GitHub release as draft, verifies all expected assets are attached, and only then publishes it. This ensures marketplace publish workflows trigger only after assets are present.
+
+Required secret:
+
+- `VS_MARKETPLACE_TOKEN`: Marketplace PAT with publish permissions.
+- `JETBRAINS_MARKETPLACE_TOKEN`: JetBrains Marketplace token.
+
+Notes:
+
+- VS Code publishing uses `HaaLeo/publish-vscode-extension@v2`.
+- Visual Studio publishing uses `cezarypiatek/VsixPublisherAction@1.1` and `VisualStudio/publishManifest.json`.
+- JetBrains publishing uses release asset download plus JetBrains Marketplace upload API.

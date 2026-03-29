@@ -1,0 +1,43 @@
+name: Publish VS Code Extension
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release VSIX assets
+        uses: robinraju/release-downloader@v1.12
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.event.release.tag_name }}
+          fileName: "*.vsix"
+          out-file-path: dist/release-assets
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Locate VS Code VSIX
+        id: vscode-vsix
+        shell: bash
+        run: |
+          set -euo pipefail
+          VSIX_FILE="$(find dist/release-assets -maxdepth 1 -type f -name '*.vsix' | grep -i 'vscode-theme' | head -n 1 || true)"
+          if [ -z "${VSIX_FILE}" ]; then
+            echo "Unable to locate VS Code VSIX in release assets."
+            exit 1
+          fi
+          echo "path=${VSIX_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ steps.vscode-vsix.outputs.path }}
+          skipDuplicate: true

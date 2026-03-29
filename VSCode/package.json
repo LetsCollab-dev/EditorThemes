@@ -2,9 +2,14 @@
   "name": "letscollab-vscode-theme",
   "displayName": "LetsCollab Theme",
   "description": "LetsCollab Dark theme for Visual Studio Code, matched to the Rider theme palette.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "savistudios",
-  "license": "SEE LICENSE IN ../LICENSE",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LetsCollab-dev/EditorThemes.git",
+    "directory": "VSCode"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -16,6 +21,7 @@
     "dark theme",
     "letscollab"
   ],
+  "icon": "images/letscollab-icon.png",
   "contributes": {
     "themes": [
       {

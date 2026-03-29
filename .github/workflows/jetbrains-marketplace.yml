@@ -1,40 +1,41 @@
 name: Publish JetBrains Plugin
 
 on:
-  push:
-    tags:
-      - "rider-v*"
-  workflow_dispatch:
+  release:
+    types:
+      - published
 
 permissions:
   contents: read
 
 jobs:
   publish:
+    if: startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     env:
       PLUGIN_ID: "26530"
       MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download release JAR assets
+        uses: robinraju/release-downloader@v1.12
         with:
-          node-version: "20"
+          repository: ${{ github.repository }}
+          tag: ${{ github.event.release.tag_name }}
+          fileName: "*.jar"
+          out-file-path: dist/release-assets
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify generated themes are in sync
-        run: node ./scripts/sync-theme-palette.mjs --check
-
-      - name: Verify semantic mapping coverage
-        run: node ./scripts/verify-theme-sync-coverage.mjs
-
-      - name: Package Rider plugin
+      - name: Locate Rider JAR artifact
+        id: rider-jar
+        shell: bash
         run: |
           set -euo pipefail
-          chmod +x ./scripts/build-rider-plugin.sh
-          ./scripts/build-rider-plugin.sh
+          JAR_FILE="$(find dist/release-assets -maxdepth 1 -type f -name '*.jar' | head -n 1 || true)"
+          if [ -z "${JAR_FILE}" ]; then
+            echo "No Rider JAR found in downloaded release assets."
+            exit 1
+          fi
+          echo "path=${JAR_FILE}" >> "$GITHUB_OUTPUT"
 
       - name: Upload to JetBrains Marketplace
         run: |
@@ -43,13 +44,8 @@ jobs:
             echo "JETBRAINS_MARKETPLACE_TOKEN is not set"
             exit 1
           fi
-          JAR_FILE="$(ls -1 dist/rider/*.jar | head -n 1)"
-          if [ -z "${JAR_FILE}" ]; then
-            echo "No JAR found in dist/rider/"
-            exit 1
-          fi
           curl -f -X POST \
             -H "Authorization: Bearer ${MARKETPLACE_TOKEN}" \
             -F "pluginId=${PLUGIN_ID}" \
-            -F "file=@${JAR_FILE}" \
+            -F "file=@${{ steps.rider-jar.outputs.path }}" \
             https://plugins.jetbrains.com/plugin/uploadPlugin

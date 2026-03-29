@@ -13,8 +13,12 @@
     </header>
 
     <main>
-      <form id="palette-form">
+      <form id="palette-form" class="editor-pane">
         <section class="toolbar">
+          <label class="version-field" for="theme-version">
+            Version
+            <input id="theme-version" type="text" spellcheck="false" />
+          </label>
           <button type="button" id="reload">Reload</button>
           <button type="button" id="reset">Reset to Last Loaded</button>
           <button type="submit" class="primary">Save and Sync</button>
@@ -23,12 +27,23 @@
         <section id="grid" class="grid" aria-live="polite"></section>
       </form>
 
-      <section class="preview">
-        <h2>Quick Preview</h2>
-        <div id="preview-card" class="preview-card">
-          <h3>Sample Title</h3>
-          <p>This preview uses key palette values for fast visual feedback while editing.</p>
-          <button type="button">Action</button>
+      <section id="preview-pane" class="preview preview-pane">
+        <div class="preview-header">
+          <div>
+            <h2>C# Syntax Preview</h2>
+            <p id="preview-mapping" class="preview-mapping"></p>
+          </div>
+          <label class="preview-target-label" for="preview-target">
+            Theme Target
+            <select id="preview-target">
+              <option value="rider">Rider</option>
+              <option value="visualStudio">Visual Studio</option>
+              <option value="vscode">VS Code</option>
+            </select>
+          </label>
+        </div>
+        <div class="code-frame">
+          <pre id="preview-code" class="code-preview" aria-live="polite"></pre>
         </div>
       </section>
 

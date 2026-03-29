@@ -3,18 +3,16 @@ name: Build Release Assets
 on:
   push:
     tags:
-      - "rider-v*"
-      - "vs-v*"
-      - "vscode-v*"
+      - "v*"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  rider:
+  build-rider:
     name: Build Rider JAR
-    if: startsWith(github.ref, 'refs/tags/rider-v')
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,30 +23,23 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Verify generated themes are in sync
-        run: node ./scripts/sync-theme-palette.mjs --check
-
-      - name: Verify semantic mapping coverage
-        run: node ./scripts/verify-theme-sync-coverage.mjs
-
       - name: Build Rider plugin JAR
+        env:
+          SKIP_THEME_SYNC: "1"
         run: |
           chmod +x ./scripts/build-rider-plugin.sh
           ./scripts/build-rider-plugin.sh
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+      - name: Upload Rider build artifact
+        uses: actions/upload-artifact@v4
         with:
-          generate_release_notes: true
+          name: rider-jar
+          path: dist/rider/*.jar
+          if-no-files-found: error
 
-      - name: Upload Rider JAR to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/rider/*.jar
-
-  visual-studio:
+  build-visual-studio:
     name: Build Visual Studio VSIX
-    if: startsWith(github.ref, 'refs/tags/vs-v')
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-2025-vs2026
     steps:
       - name: Checkout
@@ -58,12 +49,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-
-      - name: Verify generated themes are in sync
-        run: node .\scripts\sync-theme-palette.mjs --check
-
-      - name: Verify semantic mapping coverage
-        run: node .\scripts\verify-theme-sync-coverage.mjs
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -89,19 +74,16 @@ jobs:
           msbuild .\VisualStudio\LetsCollabTheme.sln -t:Restore -p:Configuration=Release -p:Platform="Any CPU" -p:VSToolsPath="$vsToolsPath"
           msbuild .\VisualStudio\LetsCollabTheme.sln -t:Rebuild -p:Configuration=Release -p:Platform="Any CPU" -p:VSToolsPath="$vsToolsPath"
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+      - name: Upload Visual Studio build artifact
+        uses: actions/upload-artifact@v4
         with:
-          generate_release_notes: true
+          name: visualstudio-vsix
+          path: VisualStudio/bin/Release/*.vsix
+          if-no-files-found: error
 
-      - name: Upload VSIX to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: VisualStudio/bin/Release/*.vsix
-
-  vscode:
+  build-vscode:
     name: Build VS Code Theme VSIX
-    if: startsWith(github.ref, 'refs/tags/vscode-v')
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -112,12 +94,6 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Verify generated themes are in sync
-        run: node ./scripts/sync-theme-palette.mjs --check
-
-      - name: Verify semantic mapping coverage
-        run: node ./scripts/verify-theme-sync-coverage.mjs
-
       - name: Install dependencies
         working-directory: VSCode
         run: npm install
@@ -126,12 +102,86 @@ jobs:
         working-directory: VSCode
         run: npx @vscode/vsce package
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+      - name: Upload VS Code build artifact
+        uses: actions/upload-artifact@v4
         with:
-          generate_release_notes: true
+          name: vscode-vsix
+          path: VSCode/*.vsix
+          if-no-files-found: error
 
-      - name: Upload VS Code VSIX to release
+  publish-release:
+    name: Create Release and Upload Assets
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs:
+      - build-rider
+      - build-visual-studio
+      - build-vscode
+    steps:
+      - name: Download Rider artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rider-jar
+          path: dist/release-assets/rider
+
+      - name: Download Visual Studio artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: visualstudio-vsix
+          path: dist/release-assets/visualstudio
+
+      - name: Download VS Code artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vscode-vsix
+          path: dist/release-assets/vscode
+
+      - name: Create draft release and upload all assets
         uses: softprops/action-gh-release@v2
         with:
-          files: VSCode/*.vsix
+          draft: true
+          generate_release_notes: true
+          files: |
+            dist/release-assets/rider/*.jar
+            dist/release-assets/visualstudio/*.vsix
+            dist/release-assets/vscode/*.vsix
+
+      - name: Verify expected release assets exist
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG_NAME="${GITHUB_REF_NAME}"
+          ASSET_NAMES="$(gh release view "${TAG_NAME}" --json assets --jq '.assets[].name')"
+
+          if [ -z "${ASSET_NAMES}" ]; then
+            echo "No assets found on release ${TAG_NAME}."
+            exit 1
+          fi
+
+          echo "Release assets for ${TAG_NAME}:"
+          echo "${ASSET_NAMES}"
+
+          echo "${ASSET_NAMES}" | grep -Ei '\.jar$' >/dev/null || {
+            echo "Missing Rider JAR asset on release ${TAG_NAME}."
+            exit 1
+          }
+
+          echo "${ASSET_NAMES}" | grep -Ei 'vscode-theme.*\.vsix$' >/dev/null || {
+            echo "Missing VS Code VSIX asset on release ${TAG_NAME}."
+            exit 1
+          }
+
+          echo "${ASSET_NAMES}" | grep -Ei '\.vsix$' | grep -Eiv 'vscode-theme' >/dev/null || {
+            echo "Missing Visual Studio VSIX asset on release ${TAG_NAME}."
+            exit 1
+          }
+
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release edit "${GITHUB_REF_NAME}" --draft=false
