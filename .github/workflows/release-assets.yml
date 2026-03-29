@@ -153,7 +153,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG_NAME="${GITHUB_REF_NAME}"
-          ASSET_NAMES="$(gh release view "${TAG_NAME}" --json assets --jq '.assets[].name')"
+          ASSET_NAMES="$(gh release view "${TAG_NAME}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name')"
 
           if [ -z "${ASSET_NAMES}" ]; then
             echo "No assets found on release ${TAG_NAME}."
@@ -184,4 +184,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release edit "${GITHUB_REF_NAME}" --draft=false
+          gh release edit "${GITHUB_REF_NAME}" --repo "${{ github.repository }}" --draft=false
